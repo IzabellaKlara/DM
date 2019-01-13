@@ -1,21 +1,40 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Recommender
 {
     class Program
     {
         static void Main(string[] args)
-        {
-            string[] filenames = new string[2] { @"MOVIES.TXT", @"GENRES.TXT" };
-           
+        {  
             KMeans km = new KMeans();
 
-            int nItemsCount = km.LoadItemsFromFile(filenames[0]);
-            int nUsersCount = km.LoadCentroidsFromFile(filenames[1]);
+            int nItemsCount = km.LoadItemsFromFile(FileNames.MoviesFile);
+
+            var clusteringCriteria = ReadClusterCriteria();
+            switch (clusteringCriteria)
+            {
+                case ClusteringCriteria.ByGenre:
+                    ComputeClustering(km, FileNames.GenresFile, nItemsCount, "Enter the number of movies per genre");
+                    break;
+                case ClusteringCriteria.ByRanking:
+                    ComputeClustering(km, FileNames.RankingFile, nItemsCount, "Enter the number of movies per rank");
+                    break;
+            }
+
+            Console.Read();
+        }
+
+        private static ClusteringCriteria ReadClusterCriteria()
+        {
+            Console.WriteLine("\nPick the cluster criteria: ");
+            Console.WriteLine("1 - By Genre");
+            Console.WriteLine("2 - By Ranking");
+            return (ClusteringCriteria) int.Parse(Console.ReadLine());
+        }
+
+        private static void ComputeClustering(KMeans km, string fileName, int nItemsCount, string userMessage)
+        {
+            int nUsersCount = km.LoadCentroidsFromFile(fileName);
 
             int nInitialCent = 0;
             int nItemsPerCluster = 0, nItemsPerClusterMax = 0;
@@ -24,7 +43,7 @@ namespace Recommender
                 do
                 {
                     nItemsPerClusterMax = nItemsCount / nUsersCount;
-                    Console.Write("Enter the number of movies per genre [2-{0}]: ", nItemsPerClusterMax);
+                    Console.Write($"{userMessage} [2-{nItemsPerClusterMax}]: ");
                     nItemsPerCluster = int.Parse(Console.ReadLine());
                 } while (nItemsPerCluster < 2 || nItemsPerCluster > nItemsPerClusterMax);
 
@@ -36,8 +55,19 @@ namespace Recommender
             }
 
             km.Compute(nInitialCent, nItemsPerCluster);
-
-            Console.Read();
         }
+    }
+
+    public static class FileNames
+    {
+        public static string MoviesFile = @"MOVIES.TXT";
+        public static string GenresFile = @"GENRES.TXT";
+        public static string RankingFile = @"RANKING.TXT";
+    }
+
+    public enum ClusteringCriteria
+    {
+        ByGenre = 1,
+        ByRanking = 2
     }
 }
