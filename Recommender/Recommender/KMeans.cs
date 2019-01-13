@@ -241,7 +241,7 @@ namespace Recommender
             return Items.Count();
         }
 
-        public void Compute(int nInitialCentroids, int nItemsPerCluster)
+        public IClustersList Compute(int nInitialCentroids, int nItemsPerCluster)
         {
             // Initializing the array of target clusters for which we'll produce the new clusters
             mTargetClusters = new IClustersList();
@@ -646,20 +646,20 @@ namespace Recommender
             //}
 
            // Console.WriteLine("\n===========================================================");
-            Console.WriteLine("\nRecommendations:");
-            Console.WriteLine("===========================================================\n");
+            //Console.WriteLine("\nRecommendations:");
+            //Console.WriteLine("===========================================================\n");
 
-            for (int iCluster = 0; iCluster < mTargetClusters.Count(); iCluster++)
-            {
-                IItemsList ItemsList = mTargetClusters[iCluster].Items;
-                Console.WriteLine("{0}", mTargetClusters[iCluster].Centroids[0].ItemText);
-                Console.WriteLine("======================================================");
+            //for (int iCluster = 0; iCluster < mTargetClusters.Count(); iCluster++)
+            //{
+            //    IItemsList ItemsList = mTargetClusters[iCluster].Items;
+            //    Console.WriteLine("{0}", mTargetClusters[iCluster].Centroids[0].ItemText);
+            //    Console.WriteLine("======================================================");
 
-                for (int iItem = 0; iItem < ItemsList.Count(); iItem++)
-                    Console.WriteLine("{0}", ItemsList[iItem].ItemText);
+            //    for (int iItem = 0; iItem < ItemsList.Count(); iItem++)
+            //        Console.WriteLine("{0}", ItemsList[iItem].ItemText);
 
-                Console.WriteLine();
-            }
+            //    Console.WriteLine();
+            //}
 
             //Console.WriteLine("KMeans Statistics:");
             //Console.WriteLine("===========================================================");
@@ -667,6 +667,8 @@ namespace Recommender
             //Console.WriteLine("Average distance between clusters nDiAvg = {0}", nDiAvg);
             //Console.WriteLine("Average distance within a cluster nD0Avg = {0}\n", nD0Avg);
             //Console.WriteLine("Average quality of KMeans clustering nQ = {0}\n", nQ);
+
+            return mTargetClusters;
         }
 
         private void Swap(ref IAttributeList attributes, int indexA, int indexB)

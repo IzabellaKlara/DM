@@ -9,7 +9,7 @@ namespace Recommender
 {
     public class IItemsList : ICloneable, IEnumerable<Item>
     {
-        private List<Item> ItemsList = null;
+        public List<Item> ItemsList = null;
         public IItemsList()
         {
             if (ItemsList == null)
