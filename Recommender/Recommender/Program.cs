@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -7,6 +8,8 @@ namespace Recommender
 {
     class Program
     {
+        public static int Average { get; set; }
+
         static void Main(string[] args)
         {
             KMeans km = new KMeans();
@@ -20,29 +23,25 @@ namespace Recommender
 
             var seenMovies = usersAndTheirSeenMovies[user];
 
-            var clusteringCriteria = ReadClusterCriteria();
-
             IClustersList obtainedClusters = new IClustersList();
+            obtainedClusters = ComputeClustering(km, FileNames.GenresFile, nItemsCount, "Enter the number of movies per genre");
 
-
-            switch (clusteringCriteria)
-            {
-                case ClusteringCriteria.ByGenre:
-                    obtainedClusters = ComputeClustering(km, FileNames.GenresFile, nItemsCount, "Enter the number of movies per genre");
-                    break;
-                case ClusteringCriteria.ByRanking:
-                    obtainedClusters = ComputeClustering(km, FileNames.RankingFile, nItemsCount, "Enter the number of movies per rank");
-                    break;
-            }
-
+            File.Delete(FileNames.RecommendedMovies);
             RecommendMoviesBasedOnClusters(seenMovies, obtainedClusters);
+
+            km = new KMeans();
+            nItemsCount = km.LoadItemsFromFile(FileNames.RecommendedMovies);
+            var newObtainedClusters = ComputeClustering(km, FileNames.RankingFile, nItemsCount, "Enter the number of movies per rank");
+
+            RecommendMoviesBasedOnClusters(seenMovies, newObtainedClusters, true);
 
             Console.Read();
         }
 
-        private static void RecommendMoviesBasedOnClusters(List<string> seenMovies, IClustersList obtainedClusters)
+        private static void RecommendMoviesBasedOnClusters(List<string> seenMovies, IClustersList obtainedClusters, bool isRankingBased = false)
         {
             Dictionary<int, List<KeyValuePair<ICluster, List<string>>>> ocurrencesAndClustersMapping = new Dictionary<int, List<KeyValuePair<ICluster, List<string>>>>();
+            int sum = 0;
             foreach (ICluster cluster in obtainedClusters.ClustersList)
             {
                 int countPerCluster = 0;
@@ -55,6 +54,7 @@ namespace Recommender
                         {
                             countPerCluster += 1;
                             seenMovieItems.Add(item.ItemText);
+                            sum += Int32.Parse(item.ItemText.Split(' ').LastOrDefault());
                         }
                     }
 
@@ -69,6 +69,12 @@ namespace Recommender
                 }
             }
 
+            if (!isRankingBased)
+            {
+                Average = sum / seenMovies.Count;
+
+            }
+
             var maxKey = ocurrencesAndClustersMapping.Keys.Max();
 
             var chosenClusterData = ocurrencesAndClustersMapping[maxKey];
@@ -79,13 +85,21 @@ namespace Recommender
             {
                 foreach (var item in data.Key.Items.ItemsList)
                 {
-                    recommendations.Add(item.ItemText);
+                    if (!data.Value.Contains(item.ItemText))
+                    {
+                        if (isRankingBased)
+                        {
+                            if(Int32.Parse(item.ItemText.Split().LastOrDefault()) >= Average){
+                                recommendations.Add(item.ItemText);
+                            }
+                        }
+                        else
+                        {
+                            recommendations.Add(item.ItemText);
+                            File.AppendAllLines(FileNames.RecommendedMovies, new List<string> { item.ItemText });
+                        }
+                    }
                 }
-                foreach (var seen in data.Value)
-                {
-                    recommendations.Remove(seen);
-                }
-
             }
 
             Console.WriteLine("Future recommendations");
@@ -138,6 +152,12 @@ namespace Recommender
 
             return km.Compute(nInitialCent, nItemsPerCluster);
         }
+
+        private static int ComputeAverageRanking(string user)
+        {
+
+            return 0;
+        }
     }
 
     public static class FileNames
@@ -146,6 +166,7 @@ namespace Recommender
         public static string GenresFile = @"GENRES.TXT";
         public static string RankingFile = @"RANKING.TXT";
         public static string UsersMovies = @"USERS_MOVIES.TXT";
+        public static string RecommendedMovies = @"RECOMMENDED_MOVIES.TXT";
 
         public static Dictionary<string, List<string>> LoadUserDataFromFile(string filename)
         {
